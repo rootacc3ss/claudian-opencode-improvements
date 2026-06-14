@@ -97,3 +97,15 @@
   color: var(--claudian-brand);
   font-weight: 500;
 }
+
+.claudian-model-browse-action {
+  margin-top: 4px;
+  border-top: 1px solid var(--background-modifier-border);
+  padding-top: 6px;
+  color: var(--text-faint);
+  font-weight: 500;
+}
+
+.claudian-model-browse-action:hover {
+  color: var(--claudian-brand);
+}

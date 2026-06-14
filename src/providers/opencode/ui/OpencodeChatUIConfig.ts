@@ -1,5 +1,7 @@
 import type {
   ProviderChatUIConfig,
+  ProviderModelBrowserAction,
+  ProviderModelBrowserContext,
   ProviderPermissionModeToggleConfig,
   ProviderReasoningOption,
   ProviderUIOption,
@@ -20,6 +22,7 @@ import {
 } from '../modes';
 import { OpencodeChatRuntime } from '../runtime/OpencodeChatRuntime';
 import { getOpencodeProviderSettings, updateOpencodeProviderSettings } from '../settings';
+import { OpencodeModelBrowserModal } from './OpencodeModelBrowserModal';
 
 const OPENCODE_MODELS: ProviderUIOption[] = [
   { value: OPENCODE_SYNTHETIC_MODEL_ID, label: 'OpenCode', description: 'ACP runtime' },
@@ -239,6 +242,14 @@ export const opencodeChatUIConfig: ProviderChatUIConfig = {
 
   getModeSelector(): null {
     return null;
+  },
+
+  getModelBrowser(): ProviderModelBrowserAction {
+    return { label: 'Browse all models…' };
+  },
+
+  openModelBrowser(context: ProviderModelBrowserContext): void {
+    new OpencodeModelBrowserModal(context.plugin.app, context).open();
   },
 
   getPermissionModeToggle(): ProviderPermissionModeToggleConfig {

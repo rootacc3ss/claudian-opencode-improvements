@@ -236,6 +236,20 @@ export interface ProviderModeSelectorConfig {
   value: string;
 }
 
+/** Descriptor for a "browse all models" action shown in the model selector. */
+export interface ProviderModelBrowserAction {
+  label: string;
+}
+
+/** Context handed to a provider when opening its model browser from the toolbar. */
+export interface ProviderModelBrowserContext {
+  plugin: ClaudianPlugin;
+  /** Switch the active model. Routes through the toolbar's existing model-change path. */
+  selectModel: (modelValue: string) => Promise<void>;
+  /** Re-render the model selector after favorites change. */
+  refresh: () => void;
+}
+
 /** Static UI configuration owned by the provider (model list, reasoning, context window). */
 export interface ProviderChatUIConfig {
   /** Model options for the selector dropdown. Provider extracts what it needs from the settings bag. */
@@ -296,6 +310,12 @@ export interface ProviderChatUIConfig {
 
   /** Optional provider-owned mode selector descriptor. */
   getModeSelector?(settings: Record<string, unknown>): ProviderModeSelectorConfig | null;
+
+  /** Optional "browse all models" action descriptor for the model selector. Null hides it. */
+  getModelBrowser?(settings: Record<string, unknown>): ProviderModelBrowserAction | null;
+
+  /** Optional provider-owned model browser launcher (opens a modal listing every discovered model). */
+  openModelBrowser?(context: ProviderModelBrowserContext): void;
 
   /** Optional hook when the toolbar changes a provider-owned mode selection. */
   applyModeSelection?(value: string, settings: unknown): void;

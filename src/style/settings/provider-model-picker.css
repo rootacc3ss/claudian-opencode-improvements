@@ -306,6 +306,28 @@
   margin-top: 3px;
 }
 
+.claudian-opencode-model-picker-star {
+  flex-shrink: 0;
+  margin-top: 1px;
+  padding: 0 4px;
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  cursor: pointer;
+  font-size: 15px;
+  line-height: 1.2;
+  color: var(--text-faint);
+}
+
+.claudian-opencode-model-picker-star:hover {
+  color: var(--claudian-brand);
+}
+
+.claudian-opencode-model-browser .claudian-opencode-model-picker-list {
+  max-height: 50vh;
+  overflow-y: auto;
+}
+
 :is(.claudian-provider-model-picker-row-text, .claudian-opencode-model-picker-row-text) {
   flex: 1;
   min-width: 0;

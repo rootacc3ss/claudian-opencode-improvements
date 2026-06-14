@@ -352,6 +352,43 @@ describe('ModelSelector', () => {
     expect(options.find((o: any) => o.children[0]?.textContent === 'Sonnet')).toBeUndefined();
     expect(parentEl.querySelector('.claudian-model-label')?.textContent).toBe('Opus 1M');
   });
+
+  it('does not render a browse action when the provider omits getModelBrowser', () => {
+    const dropdown = parentEl.querySelector('.claudian-model-dropdown');
+    const action = (dropdown?.children || []).find((c: any) =>
+      c.hasClass('claudian-model-browse-action'));
+    expect(action).toBeUndefined();
+  });
+
+  it('renders a browse action when the provider exposes getModelBrowser', () => {
+    const uiConfig = createMockUIConfig();
+    (uiConfig as any).getModelBrowser = jest.fn().mockReturnValue({ label: 'Browse all models…' });
+    callbacks.getUIConfig.mockReturnValue(uiConfig);
+
+    selector.renderOptions();
+
+    const dropdown = parentEl.querySelector('.claudian-model-dropdown');
+    const action = (dropdown?.children || []).find((c: any) =>
+      c.hasClass('claudian-model-browse-action'));
+    expect(action).toBeDefined();
+    expect(action?.children[0]?.textContent).toBe('Browse all models…');
+  });
+
+  it('invokes onOpenModelBrowser when the browse action is clicked', async () => {
+    const onOpenModelBrowser = jest.fn();
+    (callbacks as any).onOpenModelBrowser = onOpenModelBrowser;
+    const uiConfig = createMockUIConfig();
+    (uiConfig as any).getModelBrowser = jest.fn().mockReturnValue({ label: 'Browse all models…' });
+    callbacks.getUIConfig.mockReturnValue(uiConfig);
+
+    selector.renderOptions();
+
+    const dropdown = parentEl.querySelector('.claudian-model-dropdown');
+    const action = (dropdown?.children || []).find((c: any) =>
+      c.hasClass('claudian-model-browse-action'));
+    await action?.dispatchEvent('click', { stopPropagation: () => {} });
+    expect(onOpenModelBrowser).toHaveBeenCalledTimes(1);
+  });
 });
 
 describe('ModeSelector', () => {

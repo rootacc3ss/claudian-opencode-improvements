@@ -53,6 +53,7 @@ export interface ToolbarCallbacks {
   onEffortLevelChange: (effort: string) => Promise<void>;
   onServiceTierChange: (serviceTier: string) => Promise<void>;
   onPermissionModeChange: (mode: string) => Promise<void>;
+  onOpenModelBrowser?: () => void;
   getSettings: () => ToolbarSettings;
   getEnvironmentVariables?: () => string;
   getUIConfig: () => ProviderChatUIConfig;
@@ -70,13 +71,16 @@ export class ModelSelector {
     this.render();
   }
 
-  private getAvailableModels() {
-    const settings = this.callbacks.getSettings();
-    const uiConfig = this.callbacks.getUIConfig();
-    return uiConfig.getModelOptions({
-      ...settings,
+  private getToolbarSettings() {
+    return {
+      ...this.callbacks.getSettings(),
       environmentVariables: this.callbacks.getEnvironmentVariables?.(),
-    });
+    };
+  }
+
+  private getAvailableModels() {
+    const uiConfig = this.callbacks.getUIConfig();
+    return uiConfig.getModelOptions(this.getToolbarSettings());
   }
 
   private render() {
@@ -147,6 +151,24 @@ export class ModelSelector {
         }, 'Failed to change model');
       });
     }
+
+    this.renderBrowseAction();
+  }
+
+  private renderBrowseAction() {
+    if (!this.dropdownEl) return;
+
+    const browser = this.callbacks.getUIConfig().getModelBrowser?.(this.getToolbarSettings());
+    if (!browser) return;
+
+    const action = this.dropdownEl.createDiv({
+      cls: 'claudian-model-option claudian-model-browse-action',
+    });
+    action.createSpan({ text: browser.label });
+    action.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.callbacks.onOpenModelBrowser?.();
+    });
   }
 }
 

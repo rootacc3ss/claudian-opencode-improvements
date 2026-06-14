@@ -8,12 +8,7 @@ import { expandHomePath } from '../../../utils/path';
 import { maybeGetOpencodeWorkspaceServices } from '../app/OpencodeWorkspaceServices';
 import { clearOpencodeDiscoveryState } from '../discoveryState';
 import { sameStringList } from '../internal/compareCollections';
-import {
-  buildOpencodeBaseModels,
-  encodeOpencodeModelId,
-  type OpencodeDiscoveredModel,
-  splitOpencodeModelLabel,
-} from '../models';
+import { encodeOpencodeModelId } from '../models';
 import { OpencodeChatRuntime } from '../runtime/OpencodeChatRuntime';
 import {
   getOpencodeProviderSettings,
@@ -22,18 +17,10 @@ import {
   updateOpencodeProviderSettings,
 } from '../settings';
 import { OpencodeAgentSettings } from './OpencodeAgentSettings';
+import { buildEnrichedModels, type EnrichedModel } from './OpencodeModelCatalog';
 
 const ALL_PROVIDERS_KEY = 'all';
 const OPENCODE_METADATA_WARMUP_DB = ':memory:';
-
-interface EnrichedModel {
-  description: string;
-  isAvailable: boolean;
-  modelLabel: string;
-  providerKey: string;
-  providerLabel: string;
-  rawId: string;
-}
 
 export const opencodeSettingsTabRenderer: ProviderSettingsTabRenderer = {
   render(container, context) {
@@ -626,49 +613,3 @@ export const opencodeSettingsTabRenderer: ProviderSettingsTabRenderer = {
     });
   },
 };
-
-function buildEnrichedModels(
-  discoveredModels: OpencodeDiscoveredModel[],
-  visibleModels: string[],
-): EnrichedModel[] {
-  const enriched: EnrichedModel[] = [];
-  const discoveredIds = new Set<string>();
-  const baseModels = buildOpencodeBaseModels(discoveredModels);
-
-  for (const model of baseModels) {
-    const { modelLabel, providerLabel } = splitOpencodeModelLabel(model.label || model.rawId);
-    discoveredIds.add(model.rawId);
-    enriched.push({
-      description: model.description ?? '',
-      isAvailable: true,
-      modelLabel,
-      providerKey: providerLabel.toLowerCase(),
-      providerLabel,
-      rawId: model.rawId,
-    });
-  }
-
-  for (const rawId of visibleModels) {
-    if (discoveredIds.has(rawId)) {
-      continue;
-    }
-
-    const { modelLabel, providerLabel } = splitOpencodeModelLabel(rawId);
-    enriched.push({
-      description: '',
-      isAvailable: false,
-      modelLabel,
-      providerKey: providerLabel.toLowerCase(),
-      providerLabel,
-      rawId,
-    });
-  }
-
-  return enriched.sort((left, right) => {
-    const providerCmp = left.providerLabel.localeCompare(right.providerLabel);
-    if (providerCmp !== 0) {
-      return providerCmp;
-    }
-    return left.modelLabel.localeCompare(right.modelLabel);
-  });
-}

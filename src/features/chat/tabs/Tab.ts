@@ -42,7 +42,7 @@ import { ChatState } from '../state/ChatState';
 import { BangBashModeManager as BangBashModeManagerClass } from '../ui/BangBashModeManager';
 import { FileContextManager } from '../ui/FileContext';
 import { ImageContextManager } from '../ui/ImageContext';
-import { createInputToolbar } from '../ui/InputToolbar';
+import { createInputToolbar, type ToolbarCallbacks } from '../ui/InputToolbar';
 import { InstructionModeManager as InstructionModeManagerClass } from '../ui/InstructionModeManager';
 import { NavigationSidebar } from '../ui/NavigationSidebar';
 import { StatusPanel } from '../ui/StatusPanel';
@@ -815,7 +815,7 @@ function initializeInputToolbar(
     };
   };
 
-  const toolbarComponents = createInputToolbar(inputToolbar, {
+  const toolbarCallbacks: ToolbarCallbacks = {
     getUIConfig: () => {
       if (tab.lifecycleState === 'blank') {
         return blankTabUIConfigProxy();
@@ -936,7 +936,19 @@ function initializeInputToolbar(
         mode === 'plan' && getTabCapabilities(tab, plugin).supportsPlanMode,
       );
     },
-  });
+    onOpenModelBrowser: () => {
+      getTabChatUIConfig(tab, plugin).openModelBrowser?.({
+        plugin,
+        selectModel: (model: string) => toolbarCallbacks.onModelChange(model),
+        refresh: () => {
+          tab.ui.modelSelector?.updateDisplay();
+          tab.ui.modelSelector?.renderOptions();
+        },
+      });
+    },
+  };
+
+  const toolbarComponents = createInputToolbar(inputToolbar, toolbarCallbacks);
 
   tab.ui.modelSelector = toolbarComponents.modelSelector;
   tab.ui.modeSelector = toolbarComponents.modeSelector;
