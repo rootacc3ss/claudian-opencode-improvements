@@ -11,6 +11,7 @@ import {
   createTab,
   deactivateTab,
   destroyTab,
+  findEnabledModelBrowserConfig,
   getBlankTabModelOptions,
   getTabTitle,
   initializeTabControllers,
@@ -4283,5 +4284,27 @@ describe('Tab - InputController getTabProviderId wiring', () => {
     // For a blank tab with default model, should resolve to claude
     const result = config.getTabProviderId();
     expect(result).toBe('claude');
+  });
+});
+
+describe('findEnabledModelBrowserConfig', () => {
+  afterEach(() => {
+    jest.restoreAllMocks();
+  });
+
+  it('returns the first enabled provider config that exposes a model browser', () => {
+    const browserConfig = { getModelBrowser: () => ({ label: 'Browse all models…' }) } as any;
+    jest.spyOn(ProviderRegistry, 'getEnabledProviderIds').mockReturnValue(['claude', 'opencode'] as any);
+    jest.spyOn(ProviderRegistry, 'getChatUIConfig').mockImplementation((id?: any) =>
+      (id === 'opencode' ? browserConfig : ({} as any)));
+
+    expect(findEnabledModelBrowserConfig({})).toBe(browserConfig);
+  });
+
+  it('returns null when no enabled provider exposes a model browser', () => {
+    jest.spyOn(ProviderRegistry, 'getEnabledProviderIds').mockReturnValue(['claude'] as any);
+    jest.spyOn(ProviderRegistry, 'getChatUIConfig').mockReturnValue({} as any);
+
+    expect(findEnabledModelBrowserConfig({})).toBeNull();
   });
 });

@@ -79,6 +79,19 @@ export function getBlankTabModelOptions(
   });
 }
 
+/** First enabled provider whose UI config exposes a model browser (e.g. OpenCode), or null. */
+export function findEnabledModelBrowserConfig(
+  settings: Record<string, unknown>,
+): ProviderChatUIConfig | null {
+  for (const providerId of ProviderRegistry.getEnabledProviderIds(settings)) {
+    const uiConfig = ProviderRegistry.getChatUIConfig(providerId);
+    if (uiConfig.getModelBrowser) {
+      return uiConfig;
+    }
+  }
+  return null;
+}
+
 /**
  * Resolves the draft model for a new blank tab by projecting provider-specific
  * saved settings. Without this, `plugin.settings.model` reflects only the
@@ -808,10 +821,23 @@ function initializeInputToolbar(
       ? getEnabledProviderForModel(tab.draftModel, plugin.settings)
       : DEFAULT_CHAT_PROVIDER_ID;
     const baseConfig = ProviderRegistry.getChatUIConfig(draftProvider);
+    // A blank tab's base provider (often Claude) may not expose a model browser.
+    // Borrow one from any enabled provider that does (e.g. OpenCode) so users can
+    // browse and pin models without having to pick one first.
+    const browserConfig = baseConfig.getModelBrowser
+      ? null
+      : findEnabledModelBrowserConfig(plugin.settings as unknown as Record<string, unknown>);
     return {
       ...baseConfig,
       getModelOptions: (settings: Record<string, unknown>) =>
         getBlankTabModelOptions(settings),
+      ...(browserConfig
+        ? {
+          getModelBrowser: (settings: Record<string, unknown>) =>
+            browserConfig.getModelBrowser?.(settings) ?? null,
+          openModelBrowser: (context) => browserConfig.openModelBrowser?.(context),
+        }
+        : {}),
     };
   };
 
@@ -937,7 +963,9 @@ function initializeInputToolbar(
       );
     },
     onOpenModelBrowser: () => {
-      getTabChatUIConfig(tab, plugin).openModelBrowser?.({
+      // Use the toolbar's resolved config (the blank-tab proxy for blank tabs, the
+      // bound provider otherwise) so the browser opens in both states.
+      toolbarCallbacks.getUIConfig().openModelBrowser?.({
         plugin,
         selectModel: (model: string) => toolbarCallbacks.onModelChange(model),
         refresh: () => {
