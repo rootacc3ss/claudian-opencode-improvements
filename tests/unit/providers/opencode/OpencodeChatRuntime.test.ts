@@ -227,6 +227,27 @@ describe('OpencodeChatRuntime', () => {
     expect(startProcess).toHaveBeenCalledTimes(2);
   });
 
+  it('ends the active turn (error + done) when the transport closes mid-turn', () => {
+    const runtime = new OpencodeChatRuntime(createMockPlugin());
+    const pushed: Array<Record<string, unknown>> = [];
+    const close = jest.fn();
+    (runtime as any).activeTurn = {
+      queue: { push: (c: Record<string, unknown>) => pushed.push(c), close },
+      sessionId: 's1',
+    };
+
+    (runtime as any).failActiveTurn('boom');
+
+    expect(pushed).toEqual([{ type: 'error', content: 'boom' }, { type: 'done' }]);
+    expect(close).toHaveBeenCalledTimes(1);
+    expect((runtime as any).activeTurn).toBeNull();
+  });
+
+  it('failActiveTurn is a no-op when no turn is active', () => {
+    const runtime = new OpencodeChatRuntime(createMockPlugin());
+    expect(() => (runtime as any).failActiveTurn('x')).not.toThrow();
+  });
+
   it('maps ACP permission options through the shared approval UI', async () => {
     const runtime = new OpencodeChatRuntime(createMockPlugin());
     const approvalCallback = jest.fn().mockResolvedValue('allow');

@@ -129,13 +129,17 @@ export class OpencodeModelBrowserModal extends Modal {
 
     if (filtered.length === 0) {
       const emptyEl = this.listEl.createDiv({ cls: 'claudian-opencode-model-picker-empty' });
-      emptyEl.setText(
-        this.loading
-          ? 'Loading OpenCode model catalog…'
-          : this.getEnrichedModels().length === 0
+      if (this.loading) {
+        emptyEl.addClass('claudian-opencode-model-picker-loading');
+        emptyEl.createDiv({ cls: 'claudian-opencode-model-picker-spinner' });
+        emptyEl.createSpan({ text: 'Loading OpenCode models…' });
+      } else {
+        emptyEl.setText(
+          this.getEnrichedModels().length === 0
             ? 'Start OpenCode once to load its model catalog.'
             : 'No models match your filter.',
-      );
+        );
+      }
       return;
     }
 

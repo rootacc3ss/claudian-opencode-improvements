@@ -614,6 +614,9 @@ export class OpencodeChatRuntime implements ChatRuntime {
     this.unregisterTransportClose = transport.onClose(() => {
       if (this.transport === transport) {
         this.setReady(false);
+        // If OpenCode dies mid-turn, end the stream so the query generator stops
+        // waiting instead of leaving the UI stuck on a spinner forever.
+        this.failActiveTurn('OpenCode stopped unexpectedly. Check the CLI path and login state, then try again.');
       }
     });
 
@@ -658,6 +661,20 @@ export class OpencodeChatRuntime implements ChatRuntime {
     if (this.process) {
       await this.process.shutdown().catch(() => {});
       this.process = null;
+    }
+  }
+
+  private failActiveTurn(message: string): void {
+    const turn = this.activeTurn;
+    if (!turn) {
+      return;
+    }
+
+    turn.queue.push({ type: 'error', content: message });
+    turn.queue.push({ type: 'done' });
+    turn.queue.close();
+    if (this.activeTurn === turn) {
+      this.activeTurn = null;
     }
   }
 
